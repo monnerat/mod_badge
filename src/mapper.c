@@ -176,10 +176,15 @@ badge_mapper_handler(request_rec * r)
 			r->user = subreq->user;
 			r->ap_auth_type = subreq->ap_auth_type;
 			ap_set_content_type(r, subreq->content_type);
-			status = ap_run_quick_handler(r, 0);
+			r->per_dir_config = subreq->per_dir_config;
+			status = ap_location_walk(r);
 
-			if (status == DECLINED)
-				status = ap_invoke_handler(r);
+			if (status == OK) {
+				status = ap_run_quick_handler(r, 0);
+
+				if (status == DECLINED)
+					status = ap_invoke_handler(r);
+				}
 			}
 
 		ap_destroy_sub_req(subreq);

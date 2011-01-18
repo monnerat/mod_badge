@@ -142,16 +142,16 @@ static void
 badge_register_hooks(apr_pool_t * p)
 
 {
-	static const char * const translate_successors[] = {
+	static const char * const fixups_successors[] = {
 		"mod_rewrite.c",
 		"mod_proxy.c",
 		NULL
 		};
 
 	ap_hook_post_config(badge_post_config, NULL, NULL, APR_HOOK_MIDDLE);
-	ap_hook_fixups(badge_fixups, NULL, translate_successors,
+	ap_hook_fixups(badge_fixups, NULL, fixups_successors,
 	    APR_HOOK_FIRST);
-	ap_hook_handler(badge_handler, NULL, NULL, APR_HOOK_MIDDLE);
+	ap_hook_handler(badge_handler, NULL, NULL, APR_HOOK_FIRST);
 }
 
 

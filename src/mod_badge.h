@@ -58,6 +58,8 @@
 
 #define CORE_PRIVATE		1
 
+#include <sys/types.h>
+
 #include "httpd.h"
 #include "http_config.h"
 #include "http_core.h"

@@ -334,7 +334,7 @@ badge_show(request_rec * r, const badge_data * b, const char * badge,
 		if (keys->nelts == 1) {
 			cp = ap_escape_html(r->pool, key_file);
 			ap_rvputs(r, "<input type=\"hidden\" name=\"key-file\"",
-			    " value=\"", cp, "\" />cp", NULL);
+			    " value=\"", cp, "\" />", cp, NULL);
 			}
 		else {
 			ap_rvputs(r, "<select name=\"key-file\">\n", NULL);
