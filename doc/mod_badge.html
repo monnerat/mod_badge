@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<!-- Created on Jan 17, 2011 2:38:28 PM -->
+
+<html>
+   <head>
+      <title>
+         mod_badge
+      </title>
+      <meta name="GENERATOR" content="Arachnophilia 5.4"/>
+      <meta name="FORMATTER" content="Arachnophilia 5.4"/>
+   </head>
+
+   <body bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#800080" alink="#ff0000">
+
+      <h1>mod_badge</h1>
+      <h2>Description</h2>
+      <p>Dynamic redirection and (re-)authentication using an encrypted URI
+         path component.</p>
+      <h2>When to use it</h2>
+      <p>When a particular site has to give access to assigned subtrees to
+         different users, all non-badge solutions involve heavy configuration
+         changes such as (for each user):
+         <ul>
+         <li>Use mod_user and create a Unix user</li>
+         <li>Create a specific directory, update authentication database and
+             Apache configuration accordingly, then reload server
+             configuration.</li>
+         </ul>
+         <p>If the user count is high and/or new users occur frequently, these
+            operations can quickly load the administrator tasks and/or
+            Apache configuration files.<p>
+         <p>The solution to this problem is <b>mod_badge</b>: this module
+            allows an URL to contain a badge giving access to a specific
+            subtree during a defined period of time and containing its own
+            authentication parameters (such as a pass in a theme park, for
+            example). Since it is encrypted, the badge owner is not able to
+            decode it to gain direct access to the underlying subtree.</p>
+         <p>It is much easier to generate a badge for a new user than
+            to create the specific configuration and authentication
+            parameters that will be needed without mod_badge.</p>
+         <h2>How does it work</h2>
+         <p>Assuming an URL containing a badge is of the form:</p>
+         <pre>
+             <i>scheme</i>://[<i>user</i>:<i>password</i>@]<i>server</i>/<i>path-prefix</i>/<i>badge</i>/<i>path-info</i>
+         </pre>
+         <p>after checking access rights and authentication on the original URL,
+            mod_badge maps it internally to:
+         <pre>
+             <i>scheme</i>://<i>badge-user</i>:<i>badge-password</i>@<i>server</i>/<i>badge-path-prefix</i>/<i>path-info</i>
+         </pre>
+         <p>where <i>badge-user</i>, <i>badge-password</i> and <i>badge-path-prefix</i>
+            are extracted from the badge.</p>
+         <p>This is only an URL mapping, not a redirection: in particular, the client never
+            receives information about the translated URL.</p>
+         <h2>Directives</h2>
+         <h3>BadgeMap</h3>
+         <p>Description: Define a badge path and associated cryptographic key.</p>
+         <p>Syntax: BadgeMap <i>URL-path</i> <i>SSL-key-or-certificate-file</i></p>
+         <p>Context: server config, virtual host</p>
+         <p>Components of this URL may be badges encrypted with the given key.<br />
+         The <i>SSL-key-or-certificate-file</i> may contain a private key, a
+         public key or a certificate. The key is used both for encryption and
+         decryption.</p>
+         <p>More than one BadgeMap directive may be specified for the same
+         <i>URL-path</i>: this allows to use alternative keys for badges within
+         the same path.
+         <p>
+         <h2>handlers</h2>
+         <h3>badge-factory</h3>
+         <p>This handler allows the generation of new badges. It starts by
+            requesting the following parameters:
+            <ul>
+                <li>The cryptographic key to use. To be chosen among configured files.</li>
+                <li>The replacement path prefix: the target URL will be forged by
+                appending the post-badge part of the original URL to that prefix.</li>
+                <li>The badge validity start date and time.</li>
+                <li>The badge validity end date and time.</li>
+                <li>The target authentication user.</li>
+                <li>The target authentication password.</li>
+            </ul>
+            After clicking the "Generate" button, a corresponding badge is displayed.</p>
+            <p>Since this allows to create new badges, the access of this handler's
+            location must be restricted to badge administrators.</p>
+         <h3>badge-decoder</h3>
+         <p>The badge-decoder handler decodes a given badge and shows its content.</p>
+         <p>It is however not possible to decode a badge if the key used for
+            its encryption is not listed in some BadgeMap directive.</p>
+         <p>Since this handler reveals badge contents in clear form, its location
+            should be strongly restricted to badge administrator's access only.</p>
+         <h2>A typical mod_badge configuration</h2>
+         <h3>Apache configuration example</h3>
+         <pre>
+         BadgeMap       /badge          /etc/pki/tls/certs/badgecert.crt
+         Alias          /download       /var/download
+         
+         &lt;Directory /var/download>
+                 AuthType        Basic
+                 AuthName        "Download area"
+                 AuthUserFile    /etc/httpd/download_passwords
+                 Require         valid-user
+         &lt;/Directory>
+         
+         &lt;Location /badge-factory>
+                 SetHandler      badge-factory
+                 AuthType        Basic
+                 AuthName        "Download area"
+                 AuthUserFile    /etc/httpd/download_passwords
+                 Require         user badgeadmin
+         &lt;Location>
+         </pre>
+         <p>For our example, let's assume file /etc/httpd/download_passwords defines
+            user "badgeadmin" with password "pwd1" and user "badged" with password "pwd2".</p>
+         <p>When a new user needs some private download, create its private directory
+            (lets call it /var/download/thisnewuser) and store whatever should be
+            accessible to him. Then generate a badge from page at /badge-factory, logging-in as
+            "badgeadmin" with password "pwd1":
+            <ul>
+               <li>Key file: /etc/pki/tls/certs/badgecert.crt</li>
+               <li>Replacement path prefix: /download/thisnewuser</li>
+               <li>User: badged</li>
+               <li>Password: pwd2</li>
+            </ul>
+            Set the validity limits as desired.</p>
+         <p>Note: never tell the badge user/password to someone who must have only
+            badged limited access</p>
+         <p>The generated badge (a base64-like string) may then be used to form an URL
+            by appending it to the proper mapping URL-path (/badge in our example). This
+            URL can then be transmitted to our new user: through this link, he then
+            will have access to its private subtree without having to authenticate.</p>
+         <h2>Additional authentication and access control</h2>
+         <p>For strong access checking, it is possible to configure Apache to
+         pre-authenticate with the regular mechanisms before performing the badge
+         mapping and authentication: this is configured by setting the required
+         authentication and/or access-control configuration directives in a
+         &lt;Location <i>URL-path</i>> paragraph targetting the same URL-path as
+         the underlying BadgeMap directive. Obviously, the pre-authentication
+         user/password must be something else than the user/password of the target
+         directory.</p>
+         <p>Although resulting in long URLs and of little usefulness, it is possible to
+            have more than one badge in a single URL.</p>
+   </body>
+</html>

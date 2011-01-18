@@ -1,0 +1,82 @@
+Name:		mod_badge
+Version:	@VERSION@
+Release:	1%{?dist}
+Summary:	Dynamic URL mapping and authentication for the Apache HTTP Server
+Group:		System Environment/Daemons
+License:	ASL 2.0
+URL:		http://www.datasphere.ch/
+Source:		http://www.datasphere.ch/mod_badge/mod_badge-%{version}.tar.gz
+BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildRequires:	httpd-devel >= 2.2.0
+BuildRequires:	apr-devel >= 1.2.0, apr-util-devel
+Requires:	httpd-mmn = %(cat %{_includedir}/httpd/.mmn || echo missing)
+
+%description
+  Mod_badge is an Apache web server module able to perform dynamic URL
+translation an (re-)authentication using data extracted from an encrypted
+URL path component called a "badge".
+  This feature is particularly useful when you want to give controlled
+access to some sub-tree without having to deal with several user definitions
+and/or authentication parameters.
+
+
+#-------------------------------------------------------------------------------
+%prep
+#-------------------------------------------------------------------------------
+
+%setup -q
+
+
+#-------------------------------------------------------------------------------
+%build
+#-------------------------------------------------------------------------------
+
+%configure
+make %{?_smp_mflags}
+
+
+#-------------------------------------------------------------------------------
+%install
+#-------------------------------------------------------------------------------
+
+rm -rf "${RPM_BUILD_ROOT}"
+
+#	Install the module.
+
+install -d -m 755 "${RPM_BUILD_ROOT}"
+make DESTDIR="${RPM_BUILD_ROOT}" install
+
+#	Install the configuration file.
+
+install -d -m 755 "${RPM_BUILD_ROOT}%{_sysconfdir}/httpd/conf.d"
+install -p -m 644 badge.conf "${RPM_BUILD_ROOT}%{_sysconfdir}/httpd/conf.d/"
+
+#	Remove the .la files.
+
+find "${RPM_BUILD_ROOT}" -name "*.la" -delete
+
+
+#-------------------------------------------------------------------------------
+%clean
+#-------------------------------------------------------------------------------
+
+rm -rf "${RPM_BUILD_ROOT}"
+
+
+#-------------------------------------------------------------------------------
+%files
+#-------------------------------------------------------------------------------
+
+%defattr(-, root, root, -)
+%doc LICENSE
+%doc doc/*.html
+%config(noreplace) %{_sysconfdir}/httpd/conf.d/*.conf
+%{_libdir}/httpd/modules/mod_badge.so
+
+
+#-------------------------------------------------------------------------------
+%changelog
+#-------------------------------------------------------------------------------
+
+* Mon Jan 17 2011 Patrick Monnerat <pm@datasphere.ch> 1.0-1
+- Initial RPM packaging.
