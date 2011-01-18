@@ -47,9 +47,11 @@ if test "${apr_found}" != 'yes'
 then	AC_MSG_ERROR([failed to find Apache Portable Runtime development files])
 fi
 
+APR_CPPFLAGS=`"${apr_config}" --cppflags`
 APR_CFLAGS=`"${apr_config}" --cflags`
 APR_LDFLAGS=`"${apr_config}" --ldflags`
 APR_INCLUDES=`"${apr_config}" --includes`
+AC_SUBST(APR_CPPFLAGS)
 AC_SUBST(APR_CFLAGS)
 AC_SUBST(APR_LDFLAGS)
 AC_SUBST(APR_INCLUDES)

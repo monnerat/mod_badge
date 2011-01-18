@@ -16,5 +16,6 @@ mod_badge_la_LDFLAGS		=	@APXS_LDFLAGS@ @APR_LDFLAGS@	\
 					@SSL_LIBS@ -module -avoid-version
 
 mod_badge_la_CFLAGS		=	@CFLAGS@ @APXS_CFLAGS@		\
-					@APR_CFLAGS@ @SSL_CFLAGS@	\
+					@APR_CPPFLAGS@ @APR_CFLAGS@	\
+					@SSL_CFLAGS@			\
 					@APXS_INCLUDES@ @APR_INCLUDES@
