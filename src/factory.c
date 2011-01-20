@@ -112,7 +112,8 @@ badge_factory_handler(request_rec * r)
 	char * myself;
 	int i;
 
-	keys = badge_unique_key_files(r->pool, r->server);
+	keys = badge_unique_key_files(r->pool,
+	    ap_get_module_config(r->per_dir_config, &badge_module));
 
 	/**
 	***	Check parameters: if all are OK, display the result page.

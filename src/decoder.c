@@ -55,7 +55,9 @@ badge_decoder_handler(request_rec * r)
 		else {
 			/* Try to decode badge. */
 
-			keys = badge_unique_key_files(r->pool, r->server);
+			keys = badge_unique_key_files(r->pool,
+			    ap_get_module_config(r->per_dir_config,
+			    &badge_module));
 			bep = (badge_entry * *) keys->elts;
 			errmsg = "Cannot decode this badge with "
 			    "one of the configured keys";

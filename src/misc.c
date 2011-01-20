@@ -141,11 +141,10 @@ badge_match_prefix(const char * uri, const char * prefix)
 
 
 apr_array_header_t *
-badge_unique_key_files(apr_pool_t * pool, server_rec * s)
+badge_unique_key_files(apr_pool_t * pool, badge_conf * conf)
 
 {
 	apr_array_header_t * keys;
-	badge_conf * conf;
 	badge_entry * fb;
 	badge_entry * fe;
 	badge_entry * * tp;
@@ -155,7 +154,6 @@ badge_unique_key_files(apr_pool_t * pool, server_rec * s)
 	**/
 
 	keys = apr_array_make(pool, 5, sizeof(badge_entry * *));
-	conf = ap_get_module_config(s->module_config, &badge_module);
 	fb = (badge_entry *) conf->badges->elts;
 
 	for (fe = fb + conf->badges->nelts; fb < fe; fb++) {
@@ -177,8 +175,8 @@ badge_unique_key_files(apr_pool_t * pool, server_rec * s)
 }
 
 
-void
-badge_load_key(badge_entry * e, server_rec * s)
+int
+badge_load_key(badge_entry * e)
 
 {
 	void * key;
@@ -204,15 +202,13 @@ badge_load_key(badge_entry * e, server_rec * s)
 		}
 
 	if (!key)
-		ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-		    "File `%s' does not exist or does not contain valid SSL "
-		    "data. Badge directive ignored.", e->sslfile);
-	else {
-		if (e->key)
-			badge_free_key(e->key, e->isprivate);
+		return 0;
 
-		e->key = key;
-		e->keylen = keylen;
-		e->isprivate = isprivate;
-		}
+	if (e->key)
+		badge_free_key(e->key, e->isprivate);
+
+	e->key = key;
+	e->keylen = keylen;
+	e->isprivate = isprivate;
+	return 1;
 }

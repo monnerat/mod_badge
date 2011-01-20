@@ -81,8 +81,6 @@
 #define SEED_LEN_0		12	/* Crypto seed length (version 0). */
 
 #define BADGE_URI		"mod_badge_uri"
-#define BADGE_URI_TRANSLATED	"mod_badge_uri_translated"
-#define BADGE_RECURSION		"mod_badge_recursion"
 
 
 /**
@@ -113,10 +111,11 @@ typedef struct {
 
 
 /**
-***	Badge server configuration.
+***	Badge per-directory configuration.
 **/
 
 typedef struct {
+	int			keepauth;	/* Keep user authorization. */
 	apr_array_header_t *	badges;		/* Defined badges. */
 }		badge_conf;
 
@@ -200,13 +199,13 @@ extern const char *
 extern const char *
 		badge_match_prefix(const char * uri, const char * prefix);
 extern apr_array_header_t *
-		badge_unique_key_files(apr_pool_t * pool, server_rec * s);
-extern void	badge_load_key(badge_entry * e, server_rec * s);
+		badge_unique_key_files(apr_pool_t * pool, badge_conf * conf);
+extern int	badge_load_key(badge_entry * e);
 
 extern int	badge_factory_handler(request_rec * r);
 
 extern int	badge_decoder_handler(request_rec * r);
 
-extern int	badge_mapper_handler(request_rec * r);
+extern int	badge_map(request_rec * r);
 
 #endif

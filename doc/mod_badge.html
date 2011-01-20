@@ -15,7 +15,7 @@
 
       <h1>mod_badge</h1>
       <h2>Description</h2>
-      <p>Dynamic redirection and (re-)authentication using an encrypted URI
+      <p>Dynamic redirection and authentication using an encrypted URI
          path component.</p>
       <h2>When to use it</h2>
       <p>When a particular site has to give access to assigned subtrees to
@@ -28,7 +28,7 @@
              configuration.</li>
          </ul>
          <p>If the user count is high and/or new users occur frequently, these
-            operations can quickly load the administrator tasks and/or
+            operations can quickly load the administrator tasks and
             Apache configuration files.<p>
          <p>The solution to this problem is <b>mod_badge</b>: this module
             allows an URL to contain a badge giving access to a specific
@@ -42,10 +42,9 @@
          <h2>How does it work</h2>
          <p>Assuming an URL containing a badge is of the form:</p>
          <pre>
-             <i>scheme</i>://[<i>user</i>:<i>password</i>@]<i>server</i>/<i>path-prefix</i>/<i>badge</i>/<i>path-info</i>
+             <i>scheme</i>://<i>server</i>/<i>path-prefix</i>/<i>badge</i>/<i>path-info</i>
          </pre>
-         <p>after checking access rights and authentication on the original URL,
-            mod_badge maps it internally to:
+         <p>mod_badge maps it internally to:
          <pre>
              <i>scheme</i>://<i>badge-user</i>:<i>badge-password</i>@<i>server</i>/<i>badge-path-prefix</i>/<i>path-info</i>
          </pre>
@@ -53,11 +52,13 @@
             are extracted from the badge.</p>
          <p>This is only an URL mapping, not a redirection: in particular, the client never
             receives information about the translated URL.</p>
+         <p>The badge itself is an URL path component consisting in a modified base64
+            string (to accomodate URL syntax) containing the encrypted specific parameters.</p>
          <h2>Directives</h2>
          <h3>BadgeMap</h3>
          <p>Description: Define a badge path and associated cryptographic key.</p>
          <p>Syntax: BadgeMap <i>URL-path</i> <i>SSL-key-or-certificate-file</i></p>
-         <p>Context: server config, virtual host</p>
+         <p>Context: server config, virtual host, location</p>
          <p>Components of this URL may be badges encrypted with the given key.<br />
          The <i>SSL-key-or-certificate-file</i> may contain a private key, a
          public key or a certificate. The key is used both for encryption and
@@ -65,7 +66,13 @@
          <p>More than one BadgeMap directive may be specified for the same
          <i>URL-path</i>: this allows to use alternative keys for badges within
          the same path.
-         <p>
+         <h3>BadgeKeepAuth</h3>
+         <p>Description: Specifies whether any prior authorization (either for the client
+            or from a previous badge or from an SSL certificate, etc) should
+            be overriden by the authorization stored in the badge (off) or not (on).</p>
+         <p>Context: server config, virtual host, location</p>
+         <p>Syntax: BadgeKeepAuth off|on</p>
+         <p>Default: off</p>
          <h2>handlers</h2>
          <h3>badge-factory</h3>
          <p>This handler allows the generation of new badges. It starts by
@@ -85,7 +92,7 @@
          <h3>badge-decoder</h3>
          <p>The badge-decoder handler decodes a given badge and shows its content.</p>
          <p>It is however not possible to decode a badge if the key used for
-            its encryption is not listed in some BadgeMap directive.</p>
+            its encryption is not listed in some configured BadgeMap directive.</p>
          <p>Since this handler reveals badge contents in clear form, its location
             should be strongly restricted to badge administrator's access only.</p>
          <h2>A typical mod_badge configuration</h2>
@@ -128,16 +135,8 @@
             by appending it to the proper mapping URL-path (/badge in our example). This
             URL can then be transmitted to our new user: through this link, he then
             will have access to its private subtree without having to authenticate.</p>
-         <h2>Additional authentication and access control</h2>
-         <p>For strong access checking, it is possible to configure Apache to
-         pre-authenticate with the regular mechanisms before performing the badge
-         mapping and authentication: this is configured by setting the required
-         authentication and/or access-control configuration directives in a
-         &lt;Location <i>URL-path</i>> paragraph targetting the same URL-path as
-         the underlying BadgeMap directive. Obviously, the pre-authentication
-         user/password must be something else than the user/password of the target
-         directory.</p>
          <p>Although resulting in long URLs and of little usefulness, it is possible to
-            have more than one badge in a single URL.</p>
+            have more than one badge (up to the configured redirection limit) in
+            a single URL.</p>
    </body>
 </html>

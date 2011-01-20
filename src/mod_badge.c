@@ -21,57 +21,77 @@
 
 
 static const char *
-add_badge(cmd_parms * cmd, void * dconfig,
+badge_keep_auth_cmd(cmd_parms * cmd, void * dconfig, int flag)
+
+{
+	badge_conf * conf;
+
+	conf = (badge_conf *) dconfig;
+	conf->keepauth = flag? 1: -1;
+	return NULL;
+}
+
+
+static const char *
+badge_map_cmd(cmd_parms * cmd, void * dconfig,
 					const char * fake, const char * sslfile)
 
 {
-	server_rec * s;
 	badge_conf * conf;
 	badge_entry * new;
 
-	s = cmd->server;
-	conf = ap_get_module_config(s->module_config, &badge_module);
+	conf = (badge_conf *) dconfig;
 	new = apr_array_push(conf->badges);
 	new->fake = badge_canonicalize_path(cmd->pool, "/", fake);
 	new->sslfile = ap_server_root_relative(cmd->pool, sslfile);
 	new->key = NULL;
-	badge_load_key(new, s);
+
+	if (!badge_load_key(new))
+		return apr_pstrcat(cmd->pool, "BadgeMap: file `", new->sslfile,
+		    "' does not exist or does not contain valid SSL data. ",
+		    "Directive ignored.", NULL);
+
 	return NULL;
 }
 
 
 static const command_rec	badge_cmds[] = {
-	AP_INIT_TAKE2("BadgeMap", add_badge, NULL, RSRC_CONF,
-	    "a fake URL prefix and a certificate or key filename"),
+	AP_INIT_FLAG("BadgeKeepAuth", badge_keep_auth_cmd, NULL,
+	    RSRC_CONF | ACCESS_CONF,
+	    "Whether to keep client's authorization or not"),
+	AP_INIT_TAKE2("BadgeMap", badge_map_cmd, NULL, RSRC_CONF | ACCESS_CONF,
+	    "an URL prefix and a certificate or key filename"),
 	{	NULL	}
 };
 
 
 static void *
-create_badge_config(apr_pool_t * p, server_rec * s)
+create_badge_dir_config(apr_pool_t * p, char * dirspec)
 
 {
-	badge_conf * a;
+	badge_conf * conf;
 
-	a = (badge_conf *) apr_pcalloc(p, sizeof *a);
-	a->badges = apr_array_make(p, 20, sizeof(badge_entry));
-	return a;
+	conf = (badge_conf *) apr_pcalloc(p, sizeof *conf);
+	conf->badges = apr_array_make(p, 20, sizeof(badge_entry));
+	return conf;
 }
 
 
 static void *
-merge_badge_config(apr_pool_t * p, void * basev, void * overridesv)
+merge_badge_dir_config(apr_pool_t * p, void * basev, void * overridesv)
 
 {
-	badge_conf * a;
+	badge_conf * conf;
 	badge_conf * base;
 	badge_conf * overrides;
 
-	a = (badge_conf *) apr_pcalloc(p, sizeof *a);
+	conf = (badge_conf *) apr_pcalloc(p, sizeof *conf);
 	base = (badge_conf *) basev;
 	overrides = (badge_conf *) overridesv;
-	a->badges = apr_array_append(p, overrides->badges, base->badges);
-	return a;
+	conf->keepauth =
+	    overrides->keepauth? overrides->keepauth: base->keepauth;
+	conf->badges = apr_array_append(p, overrides->badges, base->badges);
+	return conf;
 }
 
 
@@ -92,29 +112,42 @@ badge_post_config(apr_pool_t * pconf, apr_pool_t * plog, apr_pool_t * ptemp,
 
 
 static int
-badge_fixups(request_rec * r)
+badge_translate_name(request_rec * r)
 
 {
-	request_rec * pr;
-	const char * uri;
+	char * uri;
+	int status;
+
+	uri = r->uri;
+	status = badge_map(r);
+
+	if (status != DECLINED)
+		apr_table_setn(r->notes, BADGE_URI, uri);
+
+	if (status == OK)
+		status = DECLINED;		/* Continue translation. */
+
+	return status;
+}
+
+
+static int
+badge_restore_uri(request_rec * r)
+
+{
+	char * uri;
 
 	/**
-	***	Restore the original URI before all other fixups to
-	***		all proper generation of "Location" header if some.
+	***	Must restore URI for subsequent location computation,
+	***		subrequests and/or link computations.
 	**/
 
-	pr = r->main;
+	uri = apr_table_get(r->notes, BADGE_URI);
 
-	if (!pr)
-		return DECLINED;		/* Not in a subrequest. */
+	if (uri)
+		r->uri = uri;
 
-	uri = apr_table_get(pr->notes, BADGE_URI);
-
-	if (!uri)
-		return DECLINED;		/* Not in badge subrequest. */
-
-	r->uri = (char *) uri;
-	return OK;
+	return DECLINED;		/* Process other hooks. */
 }
 
 
@@ -128,7 +161,7 @@ badge_handler(request_rec * r)
 	if (!strcmp(r->handler, "badge-decoder"))
 		return badge_decoder_handler(r);
 
-	return badge_mapper_handler(r);
+	return DECLINED;
 }
 
 
@@ -136,25 +169,26 @@ static void
 badge_register_hooks(apr_pool_t * p)
 
 {
-	static const char * const fixups_successors[] = {
+	static const char * const translate_successors[] = {
 		"mod_rewrite.c",
-		"mod_proxy.c",
+		"mod_alias.c",
 		NULL
 		};
 
 	ap_hook_post_config(badge_post_config, NULL, NULL, APR_HOOK_MIDDLE);
-	ap_hook_fixups(badge_fixups, NULL, fixups_successors,
-	    APR_HOOK_FIRST);
-	ap_hook_handler(badge_handler, NULL, NULL, APR_HOOK_FIRST);
+	ap_hook_translate_name(badge_translate_name, NULL,
+	    translate_successors, APR_HOOK_FIRST);
+	ap_hook_map_to_storage(badge_restore_uri, NULL, NULL, APR_HOOK_FIRST);
+	ap_hook_handler(badge_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }
 
 
 module AP_MODULE_DECLARE_DATA	badge_module = {
 	STANDARD20_MODULE_STUFF,
-	NULL,				/* Create directory configuration. */
-	NULL,				/* Merge directory configuration. */
-	create_badge_config,		/* Create server configuration. */
-	merge_badge_config,		/* Merge server configuration. */
+	create_badge_dir_config,	/* Create directory configuration. */
+	merge_badge_dir_config,		/* Merge directory configuration. */
+	NULL,				/* Create server configuration. */
+	NULL,				/* Merge server configuration. */
 	badge_cmds,			/* Command table. */
 	badge_register_hooks		/* Register hooks. */
 };
