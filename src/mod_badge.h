@@ -82,7 +82,6 @@
 
 #define BADGE_URI		"mod_badge_uri"
 #define BADGE_URI_TRANSLATED	"mod_badge_uri_translated"
-#define BADGE_AUTH		"mod_badge_uri_auth"
 #define BADGE_RECURSION		"mod_badge_recursion"
 
 

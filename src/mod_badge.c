@@ -97,7 +97,6 @@ badge_fixups(request_rec * r)
 {
 	request_rec * pr;
 	const char * uri;
-	const char * auth;
 
 	/**
 	***	Restore the original URI before all other fixups to
@@ -115,11 +114,6 @@ badge_fixups(request_rec * r)
 		return DECLINED;		/* Not in badge subrequest. */
 
 	r->uri = (char *) uri;
-	auth = apr_table_get(pr->notes, BADGE_AUTH);
-
-	if (auth)
-		apr_table_setn(r->headers_in, "Authorization", auth);
-
 	return OK;
 }
 

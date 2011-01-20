@@ -66,7 +66,6 @@ badge_mapper_handler(request_rec * r)
 	const char * cp;
 	request_rec * subreq;
 	ap_conf_vector_t * saveconfig;
-	const char * auth;
 	int status;
 
 	/**
@@ -127,17 +126,11 @@ badge_mapper_handler(request_rec * r)
 		***	Change the authentication parameters accordingly.
 		**/
 
-		auth = apr_table_get(r->headers_in, "Authorization");
-
-		if (bd.user && *bd.user) {
-			if (auth)
-				apr_table_setn(r->notes, BADGE_AUTH, auth);
-
+		if (bd.user && *bd.user)
 			apr_table_set(r->headers_in, "Authorization",
 			    apr_pstrcat(r->pool, "Basic ",
 			    ap_pbase64encode(r->pool, apr_pstrcat(r->pool,
 			    bd.user, ":", bd.passwd, NULL)), NULL));
-			}
 
 		cp = apr_pstrcat(r->pool, "/", bd.path, cp, NULL);
 		apr_table_setn(r->notes, BADGE_URI_TRANSLATED, cp);
@@ -155,28 +148,32 @@ badge_mapper_handler(request_rec * r)
 		r->per_dir_config = saveconfig;
 		status = subreq->status;
 
-		if (auth) {
-			apr_table_setn(r->headers_in, "Authorization", auth);
-
-			if (bd.user && *bd.user)
-				apr_table_unset(r->notes, BADGE_AUTH);
-			}
-		else if (bd.user && *bd.user)
-			apr_table_unset(r->headers_in, "Authorization");
-
 		if ((cp = apr_table_get(subreq->headers_out, "Location")))
 			apr_table_set(r->headers_out, "Location", cp);
 
 		if (status < 300) {
-			r->filename = subreq->filename;
-			r->finfo = subreq->finfo;
+			r->filename = apr_pstrdup(r->pool, subreq->filename);
+
+			/**
+			***	We cannot copy the file info, because some
+			***		field are allocated from the
+			***		subrequest pool. Instead, get the
+			***		info again.
+			**/
+
+			memset(&r->finfo, 0, sizeof &r->finfo);
+			apr_stat(&r->finfo, r->filename,
+			    subreq->finfo.valid, r->pool);
+			r->path_info = apr_pstrdup(r->pool, subreq->path_info);
 			r->used_path_info = subreq->used_path_info;
-			r->path_info = subreq->path_info;
-			r->handler = subreq->handler;
-			r->user = subreq->user;
-			r->ap_auth_type = subreq->ap_auth_type;
-			ap_set_content_type(r, subreq->content_type);
-			r->per_dir_config = subreq->per_dir_config;
+			r->handler = apr_pstrdup(r->pool, subreq->handler);
+			r->user = apr_pstrdup(r->pool, subreq->user);
+			r->ap_auth_type = apr_pstrdup(r->pool,
+			    subreq->ap_auth_type);
+			ap_set_content_type(r, apr_pstrdup(r->pool,
+			    subreq->content_type));
+			r->per_dir_config = ap_merge_per_dir_configs(r->pool,
+			    r->per_dir_config, subreq->per_dir_config);
 			status = ap_location_walk(r);
 
 			if (status == OK) {
