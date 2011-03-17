@@ -198,8 +198,8 @@ badge_decode_0(badge_data * d,
 	if (overflow || d->version != 0)
 		return DECLINED;	/* Data not in format version 0. */
 
-	d->to = badge_decode_number(&cp, enddata, &overflow);
 	d->from = badge_decode_number(&cp, enddata, &overflow);
+	d->to = badge_decode_number(&cp, enddata, &overflow);
 	pathlen = badge_decode_string(&cp, enddata, &d->path, &overflow);
 	userlen = badge_decode_string(&cp, enddata, &d->user, &overflow);
 	passwdlen = badge_decode_string(&cp, enddata, &d->passwd, &overflow);

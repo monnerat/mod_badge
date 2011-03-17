@@ -1,5 +1,5 @@
 AC_PREREQ(2.59)
-AC_INIT(mod_badge, 1.0)
+AC_INIT(mod_badge, 1.0.1)
 AM_INIT_AUTOMAKE(foreign)
 
 AC_PROG_CC
