@@ -55,12 +55,39 @@ badge_map_cmd(cmd_parms * cmd, void * dconfig,
 }
 
 
+static const char *
+badge_set_handler_cmd(cmd_parms * cmd, void * dconfig, const char * handler)
+
+{
+	const ap_directive_t * dirp;
+
+	/**
+	***	Hack: we redefine the SetHandler command to forbid use
+	***		of our handlers outside of a <Location.*> section.
+	**/
+
+	if (strcmp(handler, "badge-factory") &&
+	    strcmp(handler, "badge-decoder"))
+		return NULL;
+
+	for (dirp = cmd->directive; dirp = dirp->parent;)
+		if (!strcasecmp(dirp->directive, "<Location") ||
+		    !strcasecmp(dirp->directive, "<LocationMatch"))
+			return NULL;
+
+	return apr_pstrcat(cmd->pool, cmd->cmd->name, " ", handler,
+	    " may only occur in a <Location> or <LocationMatch> section", NULL);
+}
+
+
 static const command_rec	badge_cmds[] = {
 	AP_INIT_FLAG("BadgeKeepAuth", badge_keep_auth_cmd, NULL,
 	    RSRC_CONF | ACCESS_CONF,
 	    "Whether to keep client's authorization or not"),
 	AP_INIT_TAKE2("BadgeMap", badge_map_cmd, NULL, RSRC_CONF | ACCESS_CONF,
 	    "an URL prefix and a certificate or key filename"),
+	AP_INIT_TAKE1("SetHandler", badge_set_handler_cmd, NULL, OR_FILEINFO,
+	    "a handler name that overrides any other configured handler"),
 	{	NULL	}
 };
 
