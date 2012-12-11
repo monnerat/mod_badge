@@ -201,6 +201,9 @@ extern const char *
 extern apr_array_header_t *
 		badge_unique_key_files(apr_pool_t * pool, badge_conf * conf);
 extern int	badge_load_key(badge_entry * e);
+extern void	badge_log_perror(const char * file, int line, int level,
+			apr_status_t status, apr_pool_t * p,
+			const char *fmt, ...);
 
 extern int	badge_factory_handler(request_rec * r);
 

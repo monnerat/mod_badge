@@ -16,6 +16,8 @@
 ***	limitations under the License.
 **/
 
+#include <stdarg.h>
+
 #include "mod_badge.h"
 
 
@@ -211,4 +213,27 @@ badge_load_key(badge_entry * e)
 	e->keylen = keylen;
 	e->isprivate = isprivate;
 	return 1;
+}
+
+
+/* VARARGS6 */
+void
+badge_log_perror(const char * file, int line, int level,
+		apr_status_t status, apr_pool_t * p, const char *fmt, ...)
+
+{
+	char errstr[MAX_STRING_LEN];
+	va_list ap;
+
+	va_start(ap, fmt);
+	apr_vsnprintf(errstr, sizeof errstr, fmt, ap);
+	va_end(ap);
+
+#if HTTP_VERSION(AP_SERVER_MAJORVERSION_NUMBER,				\
+			AP_SERVER_MINORVERSION_NUMBER) >= HTTP_VERSION(2, 4)
+	ap_log_perror(file, line, APLOG_MODULE_INDEX, level, status, p,
+	    "%s", errstr);
+#else
+	ap_log_perror(file, line, level, status, p, "%s", errstr);
+#endif
 }
