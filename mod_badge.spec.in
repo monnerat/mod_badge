@@ -79,5 +79,11 @@ rm -rf "${RPM_BUILD_ROOT}"
 %changelog
 #-------------------------------------------------------------------------------
 
+* Tue Dec 11 2012 Patrick Monnerat <pm@datasphere.ch> 1.0.3-1
+- Support httpd version 2.4.
+
+* Thu Jun 23 2011 Patrick Monnerat <pm@datasphere.ch> 1.0.2-1
+- Restrict handlers to <Location> and <LocationMatch> sections for security.
+
 * Mon Jan 17 2011 Patrick Monnerat <pm@datasphere.ch> 1.0-1
 - Initial RPM packaging.
