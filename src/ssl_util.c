@@ -199,10 +199,10 @@ badge_get_random_bytes(char * buf, int count)
 #if APR_HAS_THREADS
 
 /**
-***	Thread-safetyness in OpenSSL. Normally handled by mod_ssl in a way
+***	Thread-safeness in OpenSSL. Normally handled by mod_ssl in a way
 ***		that satisfies this module's requirements. But we might
 ***		consider the case where mod_ssl is not loaded. For this
-***		particular case, handle thread-safetyness here.
+***		particular case, handle thread-safeness here.
 **/
 
 
