@@ -1,7 +1,8 @@
 /**
 ***	Badge formatter: clear data <--> badge conversions.
 ***
-***	Copyright 2011 DATASPHERE S.A.
+***	Copyright (c) 2011-2015 Datasphere S.A.
+***	Copyright (c) 2015 D+H
 ***
 ***	Licensed under the Apache License, Version 2.0 (the "License");
 ***	you may not use this file except in compliance with the License.

@@ -1,7 +1,8 @@
 /**
 ***	mod_badge: Apache module interface.
 ***
-***	Copyright 2011 DATASPHERE S.A.
+***	Copyright (c) 2011-2015 Datasphere S.A.
+***	Copyright (c) 2015 D+H
 ***
 ***	Licensed under the Apache License, Version 2.0 (the "License");
 ***	you may not use this file except in compliance with the License.
@@ -70,7 +71,7 @@ badge_set_handler_cmd(cmd_parms * cmd, void * dconfig, const char * handler)
 	    strcmp(handler, "badge-decoder"))
 		return NULL;
 
-	for (dirp = cmd->directive; dirp = dirp->parent;)
+	for (dirp = cmd->directive; (dirp = dirp->parent);)
 		if (!strcasecmp(dirp->directive, "<Location") ||
 		    !strcasecmp(dirp->directive, "<LocationMatch"))
 			return NULL;
@@ -162,7 +163,7 @@ static int
 badge_restore_uri(request_rec * r)
 
 {
-	char * uri;
+	const char * uri;
 
 	/**
 	***	Must restore URI for subsequent location computation,
@@ -172,7 +173,7 @@ badge_restore_uri(request_rec * r)
 	uri = apr_table_get(r->notes, BADGE_URI);
 
 	if (uri)
-		r->uri = uri;
+		r->uri = (char *) uri;
 
 	return DECLINED;		/* Process other hooks. */
 }

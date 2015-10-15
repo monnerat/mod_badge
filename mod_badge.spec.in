@@ -4,8 +4,8 @@ Release:	1%{?dist}
 Summary:	Dynamic URL mapping and authentication for the Apache HTTP Server
 Group:		System Environment/Daemons
 License:	ASL 2.0
-URL:		http://www.datasphere.ch/
-Source:		http://www.datasphere.ch/mod_badge/mod_badge-%{version}.tar.gz
+URL:		https://github.com/monnerat/mod_badge
+Source:		%{name}-%{version}.tar.gz
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:	httpd-devel >= 2.2.0
 BuildRequires:	apr-devel >= 1.2.0, apr-util-devel
@@ -78,6 +78,10 @@ rm -rf "${RPM_BUILD_ROOT}"
 #-------------------------------------------------------------------------------
 %changelog
 #-------------------------------------------------------------------------------
+
+* Thu Oct 15 2015 Patrick Monnerat <patrick.monnerat@dh.com> 1.0.4-1
+- Copyright holder is now D+H.
+- Prepare for migration to github.
 
 * Tue Dec 11 2012 Patrick Monnerat <pm@datasphere.ch> 1.0.3-1
 - Support httpd version 2.4.

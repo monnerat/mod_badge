@@ -1,7 +1,8 @@
 /**
 ***	Badge mapper: translate URLs containing badges.
 ***
-***	Copyright 2011 DATASPHERE S.A.
+***	Copyright (c) 2011-2015 Datasphere S.A.
+***	Copyright (c) 2015 D+H
 ***
 ***	Licensed under the Apache License, Version 2.0 (the "License");
 ***	you may not use this file except in compliance with the License.
@@ -115,7 +116,7 @@ badge_map(request_rec * r)
 
 				auth = apr_pstrcat(r->pool, bd.user, ":",
 				    bd.passwd, NULL);
-				auth = ap_pbase64encode(r->pool, auth);
+				auth = ap_pbase64encode(r->pool, (char *) auth);
 				auth = apr_pstrcat(r->pool, "Basic ",
 				    auth, NULL);
 				apr_table_set(r->headers_in, "Authorization",
