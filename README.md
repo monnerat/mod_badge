@@ -7,6 +7,7 @@ This module is compatible with Apache httpd version 2.2 and 2.4.
 
 
 When to use it
+
   When a particular site has to give access to assigned subtrees to different
 users, all non-badge solutions involve heavy configuration changes such
 as (for each user):
@@ -29,6 +30,7 @@ without mod_badge.
 
 
 How it works
+
   Assuming an URL containing a badge is of the form:
 
 scheme://srvr/path-prfx/badge/pathinfo
