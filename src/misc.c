@@ -2,7 +2,7 @@
 ***	mod_badge: various support procedures.
 ***
 ***	Copyright (c) 2011-2015 Datasphere S.A.
-***	Copyright (c) 2015 D+H
+***	Copyright (c) 2015-2016 D+H
 ***
 ***	Licensed under the Apache License, Version 2.0 (the "License");
 ***	you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ badge_canonicalize_path_recursive(char * * ptrfrom, char * * ptrto)
 				return -1;
 				}
 
-		memcpy(to + 1, from, i);
+		memmove(to + 1, from, i);
 		*ptrto = to + i + 1;
 		*ptrfrom = from + i;
 
