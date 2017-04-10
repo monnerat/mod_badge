@@ -79,6 +79,10 @@ rm -rf "${RPM_BUILD_ROOT}"
 %changelog
 #-------------------------------------------------------------------------------
 
+* Mon Apr 10 2017 Patrick Monnerat <patrick@monnerat.net> 1.0.6-1
+- OpenSSL 1.1 support.
+- Copyright holder is now Patrick Monnerat.
+
 * Thu Oct 15 2015 Patrick Monnerat <patrick.monnerat@dh.com> 1.0.4-1
 - Copyright holder is now D+H.
 - Prepare for migration to github.

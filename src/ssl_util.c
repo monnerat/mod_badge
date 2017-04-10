@@ -3,7 +3,8 @@
 ***	Heavily copied from mod_ssl.
 ***
 ***	Copyright (c) 2011-2015 Datasphere S.A.
-***	Copyright (c) 2015 D+H
+***	Copyright (c) 2015-2016 D+H
+***	Copyright (c) 2017 Patrick Monnerat
 ***
 ***	Licensed under the Apache License, Version 2.0 (the "License");
 ***	you may not use this file except in compliance with the License.
