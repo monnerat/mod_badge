@@ -149,6 +149,7 @@ badge_crypt(char * dst, const char * src, int len,
 	const char * esrc;
 	int i;
 	EVP_PKEY * key;
+	RSA * rsa;
 
 	if (len <= seedlen)
 		return 0;
@@ -165,18 +166,24 @@ badge_crypt(char * dst, const char * src, int len,
 	i = e->keylen;
 	key = (EVP_PKEY *) e->key;
 
+#if OPENSSL_VERSION_NUMBER < 0x10100005L
+	rsa = key->pkey.rsa;
+#else
+	rsa = EVP_PKEY_get0_RSA(key);
+#endif
+
 	while (src < esrc) {
 		if (i >= e->keylen) {
 			if (e->isprivate)
 				i = RSA_private_encrypt(e->keylen,
 				    (unsigned char *) seedbuf,
 				    (unsigned char *) seedbuf,
-				    key->pkey.rsa, RSA_NO_PADDING);
+				    rsa, RSA_NO_PADDING);
 			else
 				i = RSA_public_encrypt(e->keylen,
 				    (unsigned char *) seedbuf,
 				    (unsigned char *) seedbuf,
-				    key->pkey.rsa, RSA_NO_PADDING);
+				    rsa, RSA_NO_PADDING);
 
 			i = 0;
 			}
@@ -192,12 +199,12 @@ void
 badge_get_random_bytes(char * buf, int count)
 
 {
-	RAND_pseudo_bytes((unsigned char *) buf, count);
+	RAND_bytes((unsigned char *) buf, count);
 }
 
 
 
-#if APR_HAS_THREADS
+#if APR_HAS_THREADS && OPENSSL_VERSION_NUMBER < 0x10100005L
 
 /**
 ***	Thread-safeness in OpenSSL. Normally handled by mod_ssl in a way
@@ -246,13 +253,11 @@ ssl_util_thr_lock(int mode, int type, char * file, int line)
 		else
 			apr_thread_mutex_unlock(lock_cs[type]);
 
-#ifdef HAVE_SSLC
-#if SSLC_VERSION_NUMBER >= 0x2000
+#if defined(HAVE_SSLC) && SSLC_VERSION_NUMBER >= 0x2000
 		return 1;
 		}
 	else {
 		return -1;
-#endif
 #endif
 		}
 }
@@ -424,7 +429,7 @@ void
 badge_ssl_util_thread_setup(apr_pool_t * p)
 
 {
-#if APR_HAS_THREADS
+#if APR_HAS_THREADS && OPENSSL_VERSION_NUMBER < 0x10100005L
 	int i;
 
 	/**
