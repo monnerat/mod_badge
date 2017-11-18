@@ -5,20 +5,33 @@ die(){
 	exit
 }
 
-# this works as 'which' but we use a different name to make it more obvious we
-# aren't using 'which'! ;-)
+#--------------------------------------------------------------------------
+# findtool works as 'which' but we use a different name to make it more
+# obvious we aren't using 'which'! ;-)
+# Unlike 'which' does, the current directory is ignored.
+#
 findtool(){
   file="$1"
 
-  IFS=":"
+  if { echo "$file" | grep "/" >/dev/null 2>&1; } then
+    # when file is given with a path check it first
+    if test -f "$file"; then
+      echo "$file"
+      return
+    fi
+  fi
+
+  old_IFS=$IFS; IFS=':'
   for path in $PATH
   do
+    IFS=$old_IFS
     # echo "checks for $file in $path" >&2
-    if test -f "$path/$file"; then
+    if test "$path" -a "$path" != '.' -a -f "$path/$file"; then
       echo "$path/$file"
       return
     fi
   done
+  IFS=$old_IFS
 }
 
 #--------------------------------------------------------------------------
